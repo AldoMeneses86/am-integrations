@@ -1,0 +1,484 @@
+{
+  "name": "projects/562880453191/locations/us-central1/integrations/CostGuard/versions/5a814c4f-e017-4028-a405-44b9fe43da12",
+  "description": "EIP dedicated to control the cost of Integration Connectors",
+  "updateTime": "2023-06-29T19:20:18.041Z",
+  "createTime": "2023-06-29T19:19:39.224Z",
+  "lastModifierEmail": "",
+  "triggerConfigs": [{
+    "label": "Suspend Connectors",
+    "startTasks": [{
+      "taskId": "4"
+    }],
+    "properties": {
+      "Trigger name": "suspend-connectors"
+    },
+    "triggerType": "API",
+    "triggerNumber": "2",
+    "triggerId": "api_trigger/suspend-connectors",
+    "position": {
+      "x": 210,
+      "y": -252
+    }
+  }, {
+    "label": "Schedule Suspension",
+    "startTasks": [{
+      "taskId": "6"
+    }],
+    "properties": {
+      "Timer Name": "CostGuard_Timer_1",
+      "Scheduled Time spec": "30 17 * * *"
+    },
+    "triggerType": "CRON",
+    "triggerNumber": "1",
+    "triggerId": "cron_trigger/CostGuard_Timer_1/30+17+*+*+*",
+    "position": {
+      "x": -294,
+      "y": -252
+    }
+  }, {
+    "label": "Schedule Resume",
+    "startTasks": [{
+      "taskId": "7"
+    }],
+    "properties": {
+      "Timer Name": "CostGuard_Timer_2",
+      "Scheduled Time spec": "30 7 * * 1,2,3,4,5"
+    },
+    "triggerType": "CRON",
+    "triggerNumber": "3",
+    "triggerId": "cron_trigger/CostGuard_Timer_2/30+7+*+*+1%2C2%2C3%2C4%2C5",
+    "position": {
+      "x": -42,
+      "y": -252
+    }
+  }],
+  "taskConfigs": [{
+    "task": "JavaScriptTask",
+    "taskId": "6",
+    "parameters": {
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "\n/**\n * Function that is called during the JavaScript Task execution.\n * @param {IntegrationEvent} event\n */\nfunction executeScript(event) {\n    event.setParameter(\u0027status\u0027, \u0027true\u0027);\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "1"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "JS Suspension",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -294,
+      "y": -126
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "7",
+    "parameters": {
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "\n/**\n * Function that is called during the JavaScript Task execution.\n * @param {IntegrationEvent} event\n */\nfunction executeScript(event) {\n    event.setParameter(\u0027status\u0027, \u0027false\u0027);\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "1"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "JS Resume",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -42,
+      "y": -126
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "2",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"JSON_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$`Task_1_responseBody`$\"\n        },\n        \"transformationFunctions\": [{\n          \"functionType\": {\n            \"stringFunction\": {\n              \"functionName\": \"TO_JSON\"\n            }\n          }\n        }, {\n          \"functionType\": {\n            \"jsonFunction\": {\n              \"functionName\": \"GET_PROPERTY\"\n            }\n          },\n          \"parameters\": [{\n            \"initialValue\": {\n              \"literalValue\": {\n                \"stringValue\": \"connections\"\n              }\n            }\n          }]\n        }]\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$connectors$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }, {\n    \"inputField\": {\n      \"fieldType\": \"JSON_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$connectors$\"\n        },\n        \"transformationFunctions\": [{\n          \"functionType\": {\n            \"jsonFunction\": {\n              \"functionName\": \"GET_PROPERTY\"\n            }\n          },\n          \"parameters\": [{\n            \"initialValue\": {\n              \"literalValue\": {\n                \"stringValue\": \"name\"\n              }\n            }\n          }]\n        }]\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$con$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "5"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Get Connectors-Array",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -168,
+      "y": 126
+    }
+  }, {
+    "task": "SubWorkflowForEachLoopV2Task",
+    "taskId": "5",
+    "parameters": {
+      "iterationElementMapping": {
+        "key": "iterationElementMapping",
+        "value": {
+          "stringValue": "connector_input"
+        }
+      },
+      "triggerId": {
+        "key": "triggerId",
+        "value": {
+          "stringValue": "api_trigger/suspend-connectors"
+        }
+      },
+      "aggregatorParameterMapping": {
+        "key": "aggregatorParameterMapping"
+      },
+      "loopMetadata": {
+        "key": "loopMetadata",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_5_loopMetadata`$"]
+          }
+        }
+      },
+      "disableEucPropagation": {
+        "key": "disableEucPropagation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "listToIterate": {
+        "key": "listToIterate",
+        "value": {
+          "stringValue": "$con$"
+        }
+      },
+      "workflowName": {
+        "key": "workflowName",
+        "value": {
+          "stringValue": "CostGuard"
+        }
+      },
+      "requestParameterMapping": {
+        "key": "requestParameterMapping",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"status\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"final_status\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "overrideParameterMapping": {
+        "key": "overrideParameterMapping"
+      }
+    },
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "For Each Loop",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -168,
+      "y": 252
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "4",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_4_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams"
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\",\n  \"authConfigId\": \"5ac6cd4e-2cf5-4cb7-a395-a85d7d06fc3d\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_4_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "PATCH"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_4_responseStatus`$"]
+          }
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "https://connectors.googleapis.com/v1/$connector_input$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"updateMask\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"suspended\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "{\n  \"status\": {\n    \"state\": \"INACTIVE\",\n    \"status\": \"Inactive\",\n    \"description\": \"Connection is inactive.\"\n  },\n  \"suspended\": $final_status$\n}"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Call REST Endpoint",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": 210,
+      "y": -126
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "1",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_1_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams"
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\",\n  \"authConfigId\": \"5ac6cd4e-2cf5-4cb7-a395-a85d7d06fc3d\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_1_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "GET"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_1_responseStatus`$"]
+          }
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "https://connectors.googleapis.com/v1/projects/am-integrations/locations/us-central1/connections"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "2"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "GET Connector List",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -168
+    }
+  }],
+  "integrationParameters": [{
+    "key": "`Task_1_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_1_responseHeader`",
+    "isTransient": true,
+    "producer": "1_1"
+  }, {
+    "key": "`Task_1_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_1_responseBody`",
+    "isTransient": true,
+    "producer": "1_1"
+  }, {
+    "key": "`Task_1_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_1_responseStatus`",
+    "isTransient": true,
+    "producer": "1_1"
+  }, {
+    "key": "connector_input",
+    "dataType": "STRING_VALUE",
+    "displayName": "connector_input",
+    "inputOutputType": "IN"
+  }, {
+    "key": "connector_previous_arr",
+    "dataType": "STRING_ARRAY",
+    "displayName": "connector_previous_arr",
+    "inputOutputType": "IN"
+  }, {
+    "key": "`Task_4_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_4_responseHeader`",
+    "isTransient": true,
+    "producer": "1_4"
+  }, {
+    "key": "`Task_4_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_4_responseBody`",
+    "isTransient": true,
+    "producer": "1_4"
+  }, {
+    "key": "`Task_4_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_4_responseStatus`",
+    "isTransient": true,
+    "producer": "1_4"
+  }, {
+    "key": "test",
+    "dataType": "STRING_ARRAY",
+    "displayName": "test"
+  }, {
+    "key": "connectors",
+    "dataType": "JSON_VALUE",
+    "displayName": "connectors"
+  }, {
+    "key": "con",
+    "dataType": "JSON_VALUE",
+    "displayName": "con"
+  }, {
+    "key": "`Task_5_loopMetadata`",
+    "dataType": "JSON_VALUE",
+    "displayName": "`Task_5_loopMetadata`",
+    "isTransient": true,
+    "producer": "1_5"
+  }, {
+    "key": "status",
+    "dataType": "STRING_VALUE",
+    "displayName": "status",
+    "inputOutputType": "IN"
+  }, {
+    "key": "final_status",
+    "dataType": "STRING_VALUE",
+    "displayName": "final_status",
+    "inputOutputType": "IN"
+  }],
+  "userLabel": "Cambio a Office Hours"
+}
